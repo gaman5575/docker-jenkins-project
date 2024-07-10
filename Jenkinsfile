@@ -1,36 +1,29 @@
 pipeline {
     agent any
     parameters {
-        string(name: 'DOCKER_TAG', description: 'Enter the tag for the Docker image', defaultValue: 'latest')
+        string(name: "Docker_tag" , description: "Enter the tag for docker image" , defaultValue: 'latest')
     }
-
     stages {
-        stage('Checkout') {
+        stage('Git Checkout') {
             steps {
-                // Checkout the Git repository containing the Dockerfile
+                // Checkout the Respository containing the Dockerfile
                 git branch: 'main',
-                  url: 'https://github.com/gaman5575/docker-jenkins-pipleine.git'
+                    url: 'https://github.com/gaman5575/docker-jenkins-project.git'
+
             }
         }
-
-        stage('Build Docker Image') {
+        stage('Docker image build') {
             steps {
-                script {
-                    // Make sure Docker is installed and configured properly on Jenkins
-                    def dockerImage = docker.build("docker.io/gaman5575/python-jenkins-app:${params.DOCKER_TAG}", "-f Dockerfile .")
-                 //   def dockerCommand = "/usr/bin/docker" // Update the path to the docker command
-                 //   def dockerImage = "${dockerCommand} build -t docker.io/gaman5575/python-jenkins-app:${params.DOCKER_TAG} -f Dockerfile ."
-                    docker.withRegistry('', 'dockerhub-security') {
-                        dockerImage.push("${params.DOCKER_TAG}")
-                    }
-                    // You can add any additional build arguments if needed
+                // Make sure Docker is installed and configure on Jenkins
+                def dockerImage: docker.build("docker.io/gaman5575/todo-app:${params.Docker_tag}", "-f Dockerfile .")
+                docker.withRegistry('', 'docker-credentials'){
+                    dockerImage.push("${params.Docker_tag}")
                 }
             }
         }
-
-        stage('Scan Docker Image for Vulnerabilities') {
+        stagei('Docker Image Scan  For Vulanerabilities') {
             steps {
-                sh "docker run -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/Library/Caches:/root/.cache/ aquasec/trivy:0.51.1 image docker.io/gaman5575/python-jenkins-app:${params.DOCKER_TAG}"
+                sh 'docker run -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/Library/Caches:/root/.cache/ aquasec/trivy:0.51.1 image docker.io/gaman5575/todo-app:${params.Docker_tag}'
             }
         }
     }
